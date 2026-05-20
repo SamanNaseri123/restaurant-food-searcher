@@ -37,6 +37,7 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.core.config import settings
+from app.core.db_bootstrap import ensure_extensions, ensure_search_trigger
 from app.data.metro_grids import (
     FOOD_TYPES_CORE,
     FOOD_TYPES_FULL,
@@ -55,6 +56,19 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+
+async def _init_db(engine) -> None:
+    """Create extensions, tables, and the menu search-vector trigger.
+
+    Mirrors the API's startup bootstrap. Without the trigger, every menu item
+    the worker inserts gets a NULL search_vector and search silently returns
+    nothing — so the worker must set it up, not just call create_all().
+    """
+    async with engine.begin() as conn:
+        await ensure_extensions(conn)
+        await conn.run_sync(Base.metadata.create_all)
+        await ensure_search_trigger(conn)
 
 # --- San Diego hand-curated grid (kept for backwards compatibility) ---
 # This is the original high-quality grid with named neighborhoods.
@@ -387,8 +401,7 @@ async def run_grid(
     engine = create_async_engine(settings.database_url, echo=False)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    await _init_db(engine)
 
     # Handle checkpoint
     async with session_factory() as db:
@@ -494,8 +507,7 @@ async def run_grid(
 async def run_single(lat, lng, radius, food_type, concurrency, free_only=False, include_photos=True):
     engine = create_async_engine(settings.database_url, echo=False)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    await _init_db(engine)
 
     places = PlacesService(include_photos=include_photos)
     semaphore = asyncio.Semaphore(concurrency)
@@ -518,8 +530,7 @@ async def run_single(lat, lng, radius, food_type, concurrency, free_only=False, 
 async def run_retry_failures(error_type, concurrency, dry_run=False):
     engine = create_async_engine(settings.database_url, echo=False)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    await _init_db(engine)
 
     async with session_factory() as db:
         query = select(ScrapeFailure, Restaurant).join(

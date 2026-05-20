@@ -31,7 +31,13 @@ class Settings(BaseSettings):
     # Premium
     trial_days: int = 7
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    # extra="ignore": tolerate unrelated keys in .env (e.g. RAILWAY_DATABASE_URL
+    # used by the DB-upload tooling) instead of failing to start.
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "extra": "ignore",
+    }
 
     @field_validator("database_url")
     @classmethod

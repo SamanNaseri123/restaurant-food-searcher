@@ -144,8 +144,39 @@ startup (`app/core/db_bootstrap.py`), so a fresh hosted database needs no manual
 - Healthcheck `/health` is configured in `railway.json`
 
 ### 3. Scrape worker
-Not deployed. Run it locally pointed at the hosted DB — set `DATABASE_URL` in your
-local `.env` to Railway's **public** Postgres URL, then run the worker as usual.
+Not deployed. Two ways to get data into the hosted DB:
+- **Scrape straight to Railway:** set `DATABASE_URL` in your local `.env` to Railway's
+  public Postgres URL, run the worker as usual.
+- **Scrape locally, then upload** (recommended — keeps a local backup, see below).
+
+## Uploading a Local Database to Railway
+
+Scrape into the local Docker DB, then copy it up — avoids re-spending API budget and
+leaves you a local backup.
+
+1. **Expose the Railway DB.** A database speaks TCP, not HTTP, so it needs a
+   **TCP Proxy**, not a domain: Railway → Postgres service → Settings → Networking →
+   add **TCP Proxy** on port `5432`. You get a public `host.proxy.rlwy.net:PORT`.
+2. **Build the URL** from the service's `POSTGRES_USER/PASSWORD/DB` variables and add
+   it to `backend/.env` (config.py ignores unknown keys, so this is safe):
+   ```
+   RAILWAY_DATABASE_URL=postgresql://user:pass@host.proxy.rlwy.net:PORT/dbname
+   ```
+3. **Dump + restore** (data-only — the hosted API already bootstrapped the schema).
+   Both `pg_dump`/`pg_restore` live inside the local DB container:
+   ```bash
+   docker exec backend-db-1 pg_dump -U menufinder -d menufinder \
+     --data-only --no-owner -n public --exclude-table=spatial_ref_sys -Fc -f /tmp/mf.dump
+   docker exec -e R="$RAILWAY_DATABASE_URL" backend-db-1 \
+     pg_restore --data-only --no-owner --disable-triggers -d "$R" /tmp/mf.dump
+   ```
+   (On Git Bash prefix with `MSYS_NO_PATHCONV=1` so `/tmp` isn't mangled.)
+4. **Disable the TCP Proxy** afterward — the API connects over Railway's private
+   network and doesn't need it.
+
+Note: the worker now creates the search-vector trigger (`_init_db`), so scraped rows
+have a populated `search_vector`. A DB scraped before that fix needs a one-time
+backfill — see `app/core/db_bootstrap.py` for the exact `setweight(...)` expression.
 
 ### Notes
 - The `/api/v1/discover` endpoint triggers scraping and will fail on the hosted API
