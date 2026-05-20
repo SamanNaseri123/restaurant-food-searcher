@@ -121,6 +121,38 @@ INSERT INTO subscriptions (id, user_id, tier, source, is_active)
 SELECT gen_random_uuid(), id, 'lifetime', 'admin', 1 FROM users WHERE email = 'user@example.com';
 ```
 
+## Deploying to Railway
+
+The repo ships with `backend/Dockerfile` and `backend/railway.json` for the API
+server. The app self-bootstraps PostgreSQL extensions and the search trigger on
+startup (`app/core/db_bootstrap.py`), so a fresh hosted database needs no manual SQL.
+
+### 1. Database service
+- New project → **Deploy from Docker Image** → `postgis/postgis:16-3.4`
+- Set service variables: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
+- Railway exposes a `DATABASE_URL` reference variable for this service
+
+### 2. API service
+- **Deploy from GitHub repo** → select this repo
+- Service Settings → **Root Directory** = `backend` (so Railway finds the Dockerfile)
+- Set environment variables:
+  - `DATABASE_URL` = reference the Postgres service's URL
+    (`postgresql://...` is auto-normalized to `asyncpg` by `config.py`)
+  - `JWT_SECRET` = a long random string
+  - `GOOGLE_PLACES_API_KEY`, `ANTHROPIC_API_KEY`
+- Railway injects `$PORT`; the Dockerfile/uvicorn already use it
+- Healthcheck `/health` is configured in `railway.json`
+
+### 3. Scrape worker
+Not deployed. Run it locally pointed at the hosted DB — set `DATABASE_URL` in your
+local `.env` to Railway's **public** Postgres URL, then run the worker as usual.
+
+### Notes
+- The `/api/v1/discover` endpoint triggers scraping and will fail on the hosted API
+  (no Playwright browser in the image — by design). Use the standalone worker instead.
+- Render works too: provision managed Postgres, `CREATE EXTENSION postgis` is handled
+  by startup bootstrap; deploy the API with the same Dockerfile.
+
 ## Production Checklist
 
 - [ ] Set `JWT_SECRET` env var (32+ char random string)
@@ -131,5 +163,5 @@ SELECT gen_random_uuid(), id, 'lifetime', 'admin', 1 FROM users WHERE email = 'u
 - [ ] Move Google Places API key out of photo URLs (proxy through backend)
 - [ ] Configure iOS APIClient base URL for production
 - [ ] Set up Sentry for error monitoring
-- [ ] Deploy DB to Supabase / Neon / Railway
-- [ ] Deploy API to Railway / Render / Fly.io
+- [x] Deploy DB to Railway (postgis/postgis Docker image)
+- [x] Deploy API to Railway (Dockerfile + railway.json)

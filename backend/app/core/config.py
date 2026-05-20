@@ -1,9 +1,10 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    database_url: str = "postgresql+asyncpg://menufinder:menufinder@localhost:5432/menufinder"
-    database_url_sync: str = "postgresql://menufinder:menufinder@localhost:5432/menufinder"
+    database_url: str = "postgresql+asyncpg://menufinder:menufinder@localhost:5433/menufinder"
+    database_url_sync: str = "postgresql://menufinder:menufinder@localhost:5433/menufinder"
 
     google_places_api_key: str = ""
     anthropic_api_key: str = ""
@@ -31,6 +32,23 @@ class Settings(BaseSettings):
     trial_days: int = 7
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+
+    @field_validator("database_url")
+    @classmethod
+    def _ensure_async_driver(cls, v: str) -> str:
+        """Normalize the DB URL to use the asyncpg driver.
+
+        Hosted Postgres providers (Railway, Render, Heroku) hand out URLs like
+        `postgres://...` or `postgresql://...`. SQLAlchemy's async engine needs
+        the `postgresql+asyncpg://` form, so rewrite the scheme if needed.
+        """
+        if v.startswith("postgresql+asyncpg://"):
+            return v
+        if v.startswith("postgresql://"):
+            return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        if v.startswith("postgres://"):
+            return v.replace("postgres://", "postgresql+asyncpg://", 1)
+        return v
 
 
 settings = Settings()
