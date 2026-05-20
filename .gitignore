@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+.env
+.env.local
+
+# uv
+# uv.lock IS committed (reproducible installs) — do not ignore it
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# macOS
+.DS_Store
+
+# iOS
+MenuFinder.xcodeproj/xcuserdata/
+MenuFinder.xcodeproj/project.xcworkspace/xcuserdata/
+DerivedData/
+*.xcuserstate
+
+# Docker
+docker-compose.override.yml
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Claude
+.claude/
