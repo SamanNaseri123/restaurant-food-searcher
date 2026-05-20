@@ -36,12 +36,16 @@ class Settings(BaseSettings):
     @field_validator("database_url")
     @classmethod
     def _ensure_async_driver(cls, v: str) -> str:
-        """Normalize the DB URL to use the asyncpg driver.
+        """Normalize the DB URL: strip whitespace and use the asyncpg driver.
 
         Hosted Postgres providers (Railway, Render, Heroku) hand out URLs like
         `postgres://...` or `postgresql://...`. SQLAlchemy's async engine needs
         the `postgresql+asyncpg://` form, so rewrite the scheme if needed.
+
+        Also strips surrounding whitespace — a stray trailing newline pasted
+        into a dashboard env var otherwise corrupts the database name.
         """
+        v = v.strip()
         if v.startswith("postgresql+asyncpg://"):
             return v
         if v.startswith("postgresql://"):
