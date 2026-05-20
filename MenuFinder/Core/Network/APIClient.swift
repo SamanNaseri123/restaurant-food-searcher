@@ -8,7 +8,7 @@ actor APIClient {
     private let baseURL: String
     private let session: URLSession
 
-    init(baseURL: String = "http://localhost:8000") {
+    init(baseURL: String = "https://restaurant-food-searcher-production.up.railway.app") {
         self.baseURL = baseURL
 
         let config = URLSessionConfiguration.default
@@ -26,7 +26,7 @@ actor APIClient {
         lng: Double,
         radius: Double = 5000
     ) async throws -> SearchResponse {
-        var components = URLComponents(string: "\(baseURL)/api/search")!
+        var components = URLComponents(string: "\(baseURL)/api/v1/search")!
         components.queryItems = [
             URLQueryItem(name: "q", value: query),
             URLQueryItem(name: "lat", value: String(lat)),
@@ -45,7 +45,7 @@ actor APIClient {
 
     /// Get full details for a single restaurant
     func getRestaurant(id: UUID) async throws -> Restaurant {
-        guard let url = URL(string: "\(baseURL)/api/restaurants/\(id.uuidString)") else {
+        guard let url = URL(string: "\(baseURL)/api/v1/restaurants/\(id.uuidString)") else {
             throw APIError.invalidURL
         }
 
@@ -56,7 +56,7 @@ actor APIClient {
 
     /// Get autocomplete suggestions for a partial query
     func autocomplete(query: String) async throws -> [String] {
-        var components = URLComponents(string: "\(baseURL)/api/autocomplete")!
+        var components = URLComponents(string: "\(baseURL)/api/v1/autocomplete")!
         components.queryItems = [
             URLQueryItem(name: "q", value: query)
         ]

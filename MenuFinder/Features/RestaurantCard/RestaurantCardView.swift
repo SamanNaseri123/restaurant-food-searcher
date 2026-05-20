@@ -28,7 +28,7 @@ struct RestaurantCardView: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    if let distance = restaurant.distanceMeters {
+                    if let distance = restaurant.distanceMiles {
                         Text(formattedDistance(distance))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
@@ -135,13 +135,8 @@ struct RestaurantCardView: View {
 
     // MARK: - Helpers
 
-    private func formattedDistance(_ meters: Double) -> String {
-        if meters < 1000 {
-            return "\(Int(meters))m"
-        } else {
-            let miles = meters / 1609.34
-            return String(format: "%.1f mi", miles)
-        }
+    private func formattedDistance(_ miles: Double) -> String {
+        String(format: "%.1f mi", miles)
     }
 }
 
@@ -158,7 +153,7 @@ struct RestaurantCardView: View {
             rating: 4.5,
             priceLevel: 2,
             photos: [],
-            distanceMeters: 850,
+            distanceMiles: 0.4,
             matchedItems: [
                 MenuItem(id: UUID(), name: "Carne Asada Taco", description: "Grilled steak", price: 4.50, category: "Tacos"),
                 MenuItem(id: UUID(), name: "Fish Taco", description: "Beer battered", price: 5.00, category: "Tacos")

@@ -13,7 +13,7 @@ struct Restaurant: Identifiable, Codable, Hashable {
     let rating: Double?
     let priceLevel: Int?
     let photos: [String]
-    let distanceMeters: Double?
+    let distanceMiles: Double?
     let matchedItems: [MenuItem]
 
     enum CodingKeys: String, CodingKey {
@@ -22,7 +22,7 @@ struct Restaurant: Identifiable, Codable, Hashable {
         case phone, rating
         case priceLevel = "price_level"
         case photos
-        case distanceMeters = "distance_meters"
+        case distanceMiles = "distance_miles"
         case matchedItems = "matched_items"
     }
 
@@ -75,13 +75,13 @@ struct SearchResponse: Codable {
     let query: String
     let lat: Double
     let lng: Double
-    let radiusMeters: Double
+    let radiusMiles: Double
     let totalResults: Int
     let restaurants: [Restaurant]
 
     enum CodingKeys: String, CodingKey {
         case query, lat, lng
-        case radiusMeters = "radius_meters"
+        case radiusMiles = "radius_miles"
         case totalResults = "total_results"
         case restaurants
     }

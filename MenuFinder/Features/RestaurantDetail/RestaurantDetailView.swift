@@ -138,7 +138,7 @@ struct RestaurantDetailView: View {
             }
 
             // Distance
-            if let distance = restaurant.distanceMeters {
+            if let distance = restaurant.distanceMiles {
                 HStack(spacing: 6) {
                     Image(systemName: "location.fill")
                         .foregroundStyle(.blue)
@@ -280,13 +280,11 @@ struct RestaurantDetailView: View {
         }
     }
 
-    private func formattedDistance(_ meters: Double) -> String {
-        if meters < 1000 {
-            return "\(Int(meters)) meters away"
-        } else {
-            let miles = meters / 1609.34
-            return String(format: "%.1f miles away", miles)
+    private func formattedDistance(_ miles: Double) -> String {
+        if miles < 0.1 {
+            return "Nearby"
         }
+        return String(format: "%.1f miles away", miles)
     }
 
     private func openInMaps() {
@@ -340,7 +338,7 @@ struct RestaurantDetailView: View {
                 rating: 4.5,
                 priceLevel: 2,
                 photos: [],
-                distanceMeters: 850,
+                distanceMiles: 0.4,
                 matchedItems: [
                     MenuItem(id: UUID(), name: "Carne Asada Taco", description: "Grilled marinated steak with onions, cilantro, and salsa verde", price: 4.50, category: "Tacos"),
                     MenuItem(id: UUID(), name: "Fish Taco", description: "Beer battered cod with cabbage slaw", price: 5.00, category: "Tacos")

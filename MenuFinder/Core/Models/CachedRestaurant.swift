@@ -34,7 +34,7 @@ final class CachedRestaurant {
     }
 
     /// Convert back to a Restaurant model
-    func toRestaurant(distanceMeters: Double? = nil) -> Restaurant {
+    func toRestaurant(distanceMiles: Double? = nil) -> Restaurant {
         let items: [MenuItem] = {
             guard let data = matchedItemsData else { return [] }
             return (try? JSONDecoder().decode([MenuItem].self, from: data)) ?? []
@@ -51,7 +51,7 @@ final class CachedRestaurant {
             rating: rating,
             priceLevel: priceLevel,
             photos: photos,
-            distanceMeters: distanceMeters,
+            distanceMiles: distanceMiles,
             matchedItems: items
         )
     }
